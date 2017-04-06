@@ -1,0 +1,7 @@
+itertools
+numpy
+pandas
+seaborn
+matplotlib
+os
+argparse
