@@ -4,7 +4,7 @@ This script performs pariwise comparisons between variables in a data frame
 and saves some plots for the most extreme relationships with regard to a
 metric, e.g. the mean squared difference.
 
-It's by no means a firmal hypothesis testing, but should give some intuition of how the variables
+It's by no means formal hypothesis testing, but should give some intuition of how the variables
 in the data frame are related to each other.
 
 ### Usage:

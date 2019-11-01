@@ -34,11 +34,14 @@ def score(v0, v1):
 
 
 def results(d, permute=False, pairs='all'):
+    '''
+    Calculate scores
+    '''
     res = {}
     if pairs == 'all':
         pairs = combinations(d.columns, 2)
     if pairs == 'left-right':
-        pairs = [(i,j) for i,j in combinations(d.columns, 2) if i[3:] == j[3:]]
+        pairs = [(i,j) for i,j in combinations(d.columns, 2) if i[1:] == j[1:]]
     i=0
     for p in pairs:
         i+=1
@@ -62,8 +65,11 @@ def get_threshold_val(res_rand, alpha):
 
 
 def get_least_linear(results, results_random, alpha):
-    thr = get_threshold_val(results_random, alpha)
-    return results['pair'].ix[results['score'] > thr]
+    if alpha:
+        thr = get_threshold_val(results_random, alpha)
+        return results['pair'].ix[results['score'] > thr].tolist()
+    if n:
+        return results['pair'][:-n].tolist()
 
 
 def get_most_linear(results, results_random, alpha=None, n=None):
@@ -73,13 +79,46 @@ def get_most_linear(results, results_random, alpha=None, n=None):
     if n:
         return results['pair'][:n].tolist()
 
+def plot_relationships_ipynb_v2(d):
+    '''
+    NOT USED
+    cut : set to tuple for truncating the axes
+    '''
+    L = pd.melt(d.reset_index(), value_vars=d.columns[d.columns.str.match('LH|LF')].tolist(), id_vars=['Group'])
+    L.columns = ['Group', 'Parameter', 'Value_L']
+    L.insert(1, 'Parameter_L', L.Parameter)
+    L.Parameter = L.Parameter.str.strip('L')
+    L.set_index(['Parameter', 'Group'], inplace=True)
 
-def plot_relationships_ipynb(nl, d, n=3):
-    if n > 20:
-        print("Watch out, many plots will be generated")
-    for i,j in nl[:n]:
-        sns.lmplot(i, j, data=d, size=3)
-        plt.axis([-0.1, 1.1, -0.1, 1.1])
+    R = pd.melt(d.reset_index(), value_vars=d.columns[d.columns.str.match('RH|RF')].tolist(), id_vars=['Group'])
+    R.columns = ['Group', 'Parameter', 'Value_R']
+    R.insert(1, 'Parameter_R', R.Parameter)
+    R.Parameter = R.Parameter.str.strip('R')
+    R.set_index(['Parameter', 'Group'], inplace=True)
+
+    LR = pd.concat([L,R], axis=1)
+    LR.reset_index(inplace=True)
+
+    plt.figure()
+    p = sns.lmplot('Value_L', 'Value_R', data=LR,
+                size=3, hue='Group', row='Parameter')#, sharex=True, sharey=True)
+    plt.tight_layout()
+    return p
+
+
+def plot_relationships_ipynb(nl, d, n=None, hue='group', cut=False, **kwargs):
+    '''
+    cut : set to tuple for truncating the axes
+    '''
+
+    if n:
+        if n > 20:
+            print("Watch out, many plots will be generated")
+        nl = nl[:n]
+    for i,j in nl:
+        sns.lmplot(i, j, data=d, size=3, hue=hue, **kwargs)
+        if cut:
+            plt.axis([cut[0],cut[1], cut[0],cut[1]])
 
 
 def plot_relationships_cl(nl, d, plot_filename, n=3):
